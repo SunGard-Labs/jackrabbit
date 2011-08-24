@@ -21,7 +21,7 @@ import java.util.Calendar;
 import org.apache.jackrabbit.core.NodeId;
 import org.apache.jackrabbit.core.NodeImpl;
 import org.apache.jackrabbit.core.nodetype.NodeTypeRegistry;
-import org.apache.jackrabbit.core.state.DefaultISMLocking;
+import org.apache.jackrabbit.core.state.ISMLocking;
 import org.apache.jackrabbit.core.state.ItemStateException;
 import org.apache.jackrabbit.core.state.LocalItemStateManager;
 import org.apache.jackrabbit.core.state.NodeState;
@@ -70,7 +70,7 @@ abstract class AbstractVersionManager implements VersionManager {
     /**
      * the lock on this version manager
      */
-    private final DefaultISMLocking rwLock = new DefaultISMLocking();
+    private final ISMLocking rwLock = new VersionManagerRWLock();
 
     public AbstractVersionManager(NodeTypeRegistry ntReg) {
         this.ntReg = ntReg;
