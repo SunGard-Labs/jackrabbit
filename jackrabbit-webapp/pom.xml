@@ -30,6 +30,7 @@
     <relativePath>../jackrabbit-parent/pom.xml</relativePath>
   </parent>
   <artifactId>jackrabbit-webapp</artifactId>
+  <version>1.6.4-infinity01</version>
   <packaging>war</packaging>
   <name>Jackrabbit Web Application</name>
   <description>Web application that hosts and serves a Jackrabbit content repository</description>
@@ -42,7 +43,7 @@
     <dependency>
       <groupId>org.apache.jackrabbit</groupId>
       <artifactId>jackrabbit-core</artifactId>
-      <version>1.6.4</version>
+      <version>1.6.4-infinity01</version>
       <exclusions>
         <exclusion>
           <groupId>commons-logging</groupId>

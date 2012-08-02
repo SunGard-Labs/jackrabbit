@@ -30,6 +30,7 @@
     <relativePath>../jackrabbit-parent/pom.xml</relativePath>
   </parent>
   <artifactId>jackrabbit-core</artifactId>
+  <version>1.6.4-infinity01</version>
   <name>Jackrabbit Core</name>
   <description>Jackrabbit content repository implementation</description>
 

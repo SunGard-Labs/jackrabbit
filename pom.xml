@@ -32,6 +32,7 @@
   </parent>
 
   <artifactId>jackrabbit</artifactId>
+  <version>1.6.4-infinity01</version>
   <name>Apache Jackrabbit</name>
   <packaging>pom</packaging>
 
