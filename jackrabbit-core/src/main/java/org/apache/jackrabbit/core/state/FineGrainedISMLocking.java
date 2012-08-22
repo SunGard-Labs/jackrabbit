@@ -383,12 +383,14 @@ public class FineGrainedISMLocking implements ISMLocking {
             }
             for (int i = 0; i < slots.length; i++) {
                 Map/*<ItemId, Integer>*/ locks = slots[i];
-                if (!locks.isEmpty()) {
-                    Iterator it = locks.keySet().iterator();
-                    while (it.hasNext()) {
-                        ItemId id = (ItemId) it.next();
-                        if (FineGrainedISMLocking.hasDependency(changes, id)) {
-                            return true;
+                synchronized (locks) {
+                    if (!locks.isEmpty()) {
+                        Iterator it = locks.keySet().iterator();
+                        while (it.hasNext()) {
+                            ItemId id = (ItemId) it.next();
+                            if (FineGrainedISMLocking.hasDependency(changes, id)) {
+                                return true;
+                            }
                         }
                     }
                 }
