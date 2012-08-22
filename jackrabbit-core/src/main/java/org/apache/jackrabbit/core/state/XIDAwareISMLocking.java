@@ -323,7 +323,7 @@ public class XIDAwareISMLocking implements ISMLocking {
 	/**
 	 * {@inheritDoc}
 	 */
-	public ReadLock downgrade() throws InterruptedException {
+	public ReadLock downgrade() {
 	    if (!readers.containsKey(lockInfo.xid)) {
 		readers.put(lockInfo.xid, lockInfo);
 	    }
