@@ -35,7 +35,7 @@ import java.util.Map;
  * of the resources' {@link InternalXAResource#prepare} method, are eventually
  * unlocked.
  */
-public class TransactionContext extends Timer.Task {
+public class TransactionContext {
 
     /**
      * Logger instance.
@@ -55,19 +55,9 @@ public class TransactionContext extends Timer.Task {
     private static ThreadLocal CURRENT_XID = new ThreadLocal();
 
     /**
-     * Create a global timer for all transaction contexts.
-     */
-    private static final Timer TIMER = new Timer(true);
-
-    /**
      * Transactional resources.
      */
     private final InternalXAResource[] resources;
-
-    /**
-     * Timeout, in seconds.
-     */
-    private final int timeout;
 
     /**
     * The Xid
@@ -91,14 +81,13 @@ public class TransactionContext extends Timer.Task {
 
     /**
      * Create a new instance of this class.
+     *
      * @param xid associated xid
      * @param resources transactional resources
-     * @param timeout timeout, in seconds
      */
-    public TransactionContext(Xid xid, InternalXAResource[] resources, int timeout) {
+    public TransactionContext(Xid xid, InternalXAResource[] resources) {
         this.xid = xid;
         this.resources = resources;
-        this.timeout = timeout;
     }
 
     /**
@@ -172,9 +161,6 @@ public class TransactionContext extends Timer.Task {
             e.initCause(txe);
             throw e;
         }
-
-        // start rollback task in case the commit is never issued
-        TIMER.schedule(this, timeout * 1000, Integer.MAX_VALUE);
     }
 
     /**
@@ -182,12 +168,15 @@ public class TransactionContext extends Timer.Task {
      * all resources. If some resource reports an error on commit,
      * automatically rollback changes on all other resources. Throw
      * exception at the end if some commit failed.
+     *
      * @throws XAException if an error occurs
      */
     public synchronized void commit() throws XAException {
         if (status == STATUS_ROLLED_BACK) {
-            throw new XAException(XAException.XA_RBTIMEOUT);
+            throw new XAException(XAException.XA_HEURRB);
         }
+
+        boolean heuristicCommit = false;
         bindCurrentXid();
         status = STATUS_COMMITTING;
         beforeOperation();
@@ -212,12 +201,15 @@ public class TransactionContext extends Timer.Task {
         afterOperation();
         status = STATUS_COMMITTED;
 
-        // cancel the rollback task
-        cancel();
         cleanCurrentXid();
 
         if (txe != null) {
-            XAException e = new XAException(XAException.XA_RBOTHER);
+            XAException e = null;
+            if (heuristicCommit) {
+                e = new XAException(XAException.XA_HEURMIX);
+            } else {
+                e = new XAException(XAException.XA_HEURRB);
+            }
             e.initCause(txe);
             throw e;
         }
@@ -230,7 +222,7 @@ public class TransactionContext extends Timer.Task {
      */
     public synchronized void rollback() throws XAException {
         if (status == STATUS_ROLLED_BACK) {
-            throw new XAException(XAException.XA_RBTIMEOUT);
+            throw new XAException(XAException.XA_RBOTHER);
         }
         bindCurrentXid();
         status = STATUS_ROLLING_BACK;
@@ -249,31 +241,10 @@ public class TransactionContext extends Timer.Task {
         afterOperation();
         status = STATUS_ROLLED_BACK;
 
-        // cancel the rollback task
-        cancel();
         cleanCurrentXid();
 
         if (errors != 0) {
             throw new XAException(XAException.XA_RBOTHER);
-        }
-    }
-
-    /**
-     * Rolls back the transaction if still prepared and marks the transaction
-     * rolled back.
-     */
-    public void run() {
-        synchronized (this) {
-            if (status == STATUS_PREPARED) {
-                try {
-                    rollback();
-                } catch (XAException e) {
-                    /* ignore */
-                }
-                log.warn("Transaction rolled back because timeout expired.");
-            }
-            // cancel the rollback task
-            cancel();
         }
     }
 
