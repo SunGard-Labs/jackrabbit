@@ -45,53 +45,56 @@ public class TransactionBoundXAResource implements XAResource {
         this.xaResource = res;
     }
 
-    public void commit(Xid arg0, boolean arg1) throws XAException {
-        xaResource.commit(arg0, arg1);
+    public void commit(Xid xid, boolean flag) throws XAException {
+        xaResource.commit(xid, flag);
     }
 
-    public void end(Xid arg0, int arg1) throws XAException {
+    public void end(Xid xid, int i) throws XAException {
         if (!ending) {
             this.ending = true;
+
             try {
-                xaResource.end(arg0, arg1);
-            } finally {
-                this.connection.closeHandles();
+                xaResource.end(xid, i);
+            }
+            finally {
+                if( i != XAResource.TMSUSPEND) {
+                    this.connection.closeHandles();
+                }
             }
             // reuse the XAResource
             this.ending = false;
         }
     }
 
-    public void forget(Xid arg0) throws XAException {
-        xaResource.forget(arg0);
+    public void forget(Xid xid) throws XAException {
+        xaResource.forget(xid);
     }
 
     public int getTransactionTimeout() throws XAException {
         return xaResource.getTransactionTimeout();
     }
 
-    public boolean isSameRM(XAResource arg0) throws XAException {
-        return xaResource.isSameRM(arg0);
+    public boolean isSameRM(XAResource xar) throws XAException {
+        return xaResource.isSameRM(xar);
     }
 
-    public int prepare(Xid arg0) throws XAException {
-        return xaResource.prepare(arg0);
+    public int prepare(Xid xid) throws XAException {
+        return xaResource.prepare(xid);
     }
 
-    public Xid[] recover(int arg0) throws XAException {
-        return xaResource.recover(arg0);
+    public Xid[] recover(int i) throws XAException {
+        return xaResource.recover(i);
     }
 
-    public void rollback(Xid arg0) throws XAException {
-        xaResource.rollback(arg0);
+    public void rollback(Xid xid) throws XAException {
+        xaResource.rollback(xid);
     }
 
-    public boolean setTransactionTimeout(int arg0) throws XAException {
-        return xaResource.setTransactionTimeout(arg0);
+    public boolean setTransactionTimeout(int timeout) throws XAException {
+        return xaResource.setTransactionTimeout(timeout);
     }
 
-    public void start(Xid arg0, int arg1) throws XAException {
-        xaResource.start(arg0, arg1);
+    public void start(Xid xid, int i) throws XAException {
+        xaResource.start(xid, i);
     }
-
 }
