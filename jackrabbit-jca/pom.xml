@@ -30,7 +30,7 @@
     <relativePath>../jackrabbit-parent/pom.xml</relativePath>
   </parent>
   <artifactId>jackrabbit-jca</artifactId>
-  <version>1.6.4-infinity01</version>
+  <version>1.6.4-infinity02</version>
   <packaging>rar</packaging>
   <name>Jackrabbit JCA Resource Adapter</name>
   <!--
@@ -109,7 +109,7 @@
     <dependency>
       <groupId>org.apache.jackrabbit</groupId>
       <artifactId>jackrabbit-core</artifactId>
-      <version>1.6.4-infinity01</version>
+      <version>1.6.4-infinity02</version>
       <exclusions>
         <exclusion>
           <groupId>commons-logging</groupId>

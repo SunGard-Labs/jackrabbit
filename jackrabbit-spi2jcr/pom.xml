@@ -30,7 +30,7 @@
     <relativePath>../jackrabbit-parent/pom.xml</relativePath>
   </parent>
   <artifactId>jackrabbit-spi2jcr</artifactId>
-  <version>1.6.4-infinity01</version>
+  <version>1.6.4-infinity02</version>
   <name>Jackrabbit SPI to JCR</name>
 
   <build>
@@ -134,7 +134,7 @@
     <dependency>
       <groupId>org.apache.jackrabbit</groupId>
       <artifactId>jackrabbit-core</artifactId>
-      <version>1.6.4-infinity01</version>
+      <version>1.6.4-infinity02</version>
       <scope>test</scope>
     </dependency>
     <dependency>
