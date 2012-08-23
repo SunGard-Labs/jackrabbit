@@ -119,14 +119,26 @@ public final class JCARepositoryHandle
      * Return the descriptor keys.
      */
     public String[] getDescriptorKeys() {
-        return mcf.getRepository().getDescriptorKeys();
+        try {
+            return mcf.getRepository().getDescriptorKeys();
+        } catch (RepositoryException e) {
+            RuntimeException exception = new RuntimeException(
+                    "Failed to access the repository: " + e.getMessage(), e);
+            throw exception;
+        }
     }
 
     /**
      * Return the descriptor for key.
      */
     public String getDescriptor(String key) {
-        return mcf.getRepository().getDescriptor(key);
+        try {
+            return mcf.getRepository().getDescriptor(key);
+        } catch (RepositoryException e) {
+            RuntimeException exception = new RuntimeException(
+                    "Failed to access the repository: " + e.getMessage(), e);
+            throw exception;
+        }
     }
 
     /**

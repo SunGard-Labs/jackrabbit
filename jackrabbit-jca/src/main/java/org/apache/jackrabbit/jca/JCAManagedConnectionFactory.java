@@ -16,10 +16,8 @@
  */
 package org.apache.jackrabbit.jca;
 
-import org.apache.jackrabbit.api.XASession;
 import org.apache.jackrabbit.core.RepositoryImpl;
 
-import javax.jcr.Credentials;
 import javax.jcr.RepositoryException;
 import javax.resource.ResourceException;
 import javax.resource.spi.ConnectionManager;
@@ -121,32 +119,9 @@ public final class JCAManagedConnectionFactory
      */
     public Object createConnectionFactory(ConnectionManager cm)
             throws ResourceException {
-        createRepository();
         JCARepositoryHandle handle = new JCARepositoryHandle(this, cm);
         log("Created repository handle (" + handle + ")");
         return handle;
-    }
-
-    /**
-     * Create a new session.
-     */
-    private XASession openSession(JCAConnectionRequestInfo cri)
-            throws ResourceException {
-        createRepository();
-        Credentials creds = cri.getCredentials();
-        String workspace = cri.getWorkspace();
-
-        try {
-            XASession session = (XASession) getRepository().login(creds, workspace);
-            log("Created session (" + session + ")");
-            return session;
-        } catch (RepositoryException e) {
-            log("Failed to create session", e);
-            ResourceException exception = new ResourceException(
-                    "Failed to create session: " + e.getMessage());
-            exception.setLinkedException(e);
-            throw exception;
-        }
     }
 
     /**
@@ -173,7 +148,7 @@ public final class JCAManagedConnectionFactory
      */
     private ManagedConnection createManagedConnection(JCAConnectionRequestInfo cri)
             throws ResourceException {
-        return new JCAManagedConnection(this, cri, openSession(cri));
+        return new JCAManagedConnection(this, cri);
     }
 
     /**
@@ -199,9 +174,12 @@ public final class JCAManagedConnectionFactory
     }
 
     /**
-     * Return the repository.
+     * Return the repository, automatically creating it if needed.
      */
-    public RepositoryImpl getRepository() {
+    public synchronized RepositoryImpl getRepository() throws RepositoryException {
+        if (repository == null) {
+           createRepository();
+        }
         return repository;
     }
 
@@ -272,29 +250,21 @@ public final class JCAManagedConnectionFactory
      * Create repository.
      */
     private void createRepository()
-            throws ResourceException {
+            throws RepositoryException {
         if (repository == null) {
             // Check the home directory
             if ((homeDir == null) || homeDir.equals("")) {
-                throw new ResourceException("Property 'homeDir' not set");
+                throw new RepositoryException("Property 'homeDir' not set");
             }
 
             // Check the config file
             if ((configFile == null) || configFile.equals("")) {
-                throw new ResourceException("Property 'configFile' not set");
+                throw new RepositoryException("Property 'configFile' not set");
             }
 
-            try {
-                JCARepositoryManager mgr = JCARepositoryManager.getInstance();
-                repository = mgr.createRepository(homeDir, configFile);
-                log("Created repository (" + repository + ")");
-            } catch (RepositoryException e) {
-                log("Failed to create repository", e);
-                ResourceException exception = new ResourceException(
-                        "Failed to create session: " + e.getMessage());
-                exception.setLinkedException(e);
-                throw exception;
-            }
+            JCARepositoryManager mgr = JCARepositoryManager.getInstance();
+            repository = mgr.createRepository(homeDir, configFile);
+            log("Created repository (" + repository + ")");
         }
     }
 
