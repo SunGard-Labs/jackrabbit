@@ -58,7 +58,7 @@ public final class JCAManagedConnection
     /**
      * XAResource instance.
      */
-    private final XAResource xaResource;
+    private XAResource xaResource;
 
     /**
      * Listeners.
@@ -152,8 +152,8 @@ public final class JCAManagedConnection
      */
     public void destroy()
             throws ResourceException {
-        cleanup();
-        session.logout();
+        this.session.logout();
+        this.handles.clear();
     }
 
     /**
@@ -166,6 +166,11 @@ public final class JCAManagedConnection
             this.session.logout();
             this.session = openSession();
             this.handles.clear();
+            if (this.mcf.getBindSessionToTransaction().booleanValue() && (this.xaResource instanceof TransactionBoundXAResource)) {
+            	((TransactionBoundXAResource) this.xaResource).rebind((XAResource) session);
+            } else {
+            	this.xaResource = (XAResource) session;
+            }
         }
     }
 

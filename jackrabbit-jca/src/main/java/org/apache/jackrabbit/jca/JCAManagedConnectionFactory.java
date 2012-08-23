@@ -47,7 +47,7 @@ public final class JCAManagedConnectionFactory
 
     /**
      * Flag indicating whether the session should be bound to the
-     * transaction lyfecyle.
+     * transaction lifecyle.
      * In other words, if this flag is true the handle
      * will be closed when the transaction ends.
      */
