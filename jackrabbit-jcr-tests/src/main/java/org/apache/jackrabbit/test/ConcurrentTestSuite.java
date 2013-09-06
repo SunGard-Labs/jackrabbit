@@ -16,11 +16,13 @@
  */
 package org.apache.jackrabbit.test;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
+
 import junit.framework.TestSuite;
 import junit.framework.TestResult;
 import junit.framework.Test;
-import EDU.oswego.cs.dl.util.concurrent.Executor;
-import EDU.oswego.cs.dl.util.concurrent.PooledExecutor;
 
 /**
  * <code>ConcurrentTestSuite</code> implements a test suite that runs tests
@@ -46,11 +48,7 @@ public class ConcurrentTestSuite extends TestSuite {
 
     public ConcurrentTestSuite(String name, int numThreads) {
         super(name);
-        executor = new PooledExecutor(numThreads) {
-            {
-                waitWhenBlocked();
-            }
-        };
+        executor = Executors.newFixedThreadPool(numThreads);
     }
 
     public void run(TestResult result) {
@@ -70,7 +68,7 @@ public class ConcurrentTestSuite extends TestSuite {
                     }
                 }
             });
-        } catch (InterruptedException e) {
+        } catch (RejectedExecutionException e) {
             throw new RuntimeException(e); 
         }
     }
