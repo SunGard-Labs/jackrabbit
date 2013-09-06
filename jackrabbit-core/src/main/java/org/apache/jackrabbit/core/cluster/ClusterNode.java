@@ -20,6 +20,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.jcr.RepositoryException;
@@ -43,9 +46,6 @@ import org.apache.jackrabbit.spi.PrivilegeDefinition;
 import org.apache.jackrabbit.spi.QNodeTypeDefinition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import EDU.oswego.cs.dl.util.concurrent.Latch;
-import EDU.oswego.cs.dl.util.concurrent.Mutex;
 
 /**
  * Default clustered node implementation.
@@ -122,7 +122,7 @@ public class ClusterNode implements Runnable,
     /**
      * Mutex used when syncing.
      */
-    private final Mutex syncLock = new Mutex();
+    private final Semaphore syncLock = new Semaphore(1);
 
     /**
      * Update counter, used in displaying the number of updates in audit log.
@@ -132,7 +132,7 @@ public class ClusterNode implements Runnable,
     /**
      * Latch used to communicate a stop request to the synchronization thread.
      */
-    private final Latch stopLatch = new Latch();
+    private final CountDownLatch stopLatch = new CountDownLatch(1);
 
     /**
      * Sync counter, used to avoid repeated sync() calls from piling up.
@@ -292,7 +292,7 @@ public class ClusterNode implements Runnable,
     public void run() {
         for (;;) {
             try {
-                if (stopLatch.attempt(syncDelay)) {
+                if (stopLatch.await(syncDelay, TimeUnit.MILLISECONDS)) {
                     break;
                 }
             } catch (InterruptedException e) {
@@ -372,7 +372,7 @@ public class ClusterNode implements Runnable,
         if (status != STOPPED) {
             status = STOPPED;
 
-            stopLatch.release();
+            stopLatch.countDown();
 
             // Give synchronization thread some time to finish properly before
             // closing down the journal (see JCR-1553)

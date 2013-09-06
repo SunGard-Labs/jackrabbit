@@ -25,13 +25,13 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.jackrabbit.core.id.ItemId;
 import org.apache.jackrabbit.core.id.NodeId;
 import org.apache.jackrabbit.core.id.PropertyId;
 
-import EDU.oswego.cs.dl.util.concurrent.Latch;
 import EDU.oswego.cs.dl.util.concurrent.ReadWriteLock;
 import EDU.oswego.cs.dl.util.concurrent.Sync;
 import EDU.oswego.cs.dl.util.concurrent.WriterPreferenceReadWriteLock;
@@ -74,15 +74,15 @@ public class FineGrainedISMLocking implements ISMLocking {
      * List of waiting readers that are blocked because they conflict with
      * the current writer.
      */
-    private List<Sync> waitingReaders =
-        Collections.synchronizedList(new LinkedList<Sync>());
+    private List<CountDownLatch> waitingReaders =
+        Collections.synchronizedList(new LinkedList<CountDownLatch>());
 
     /**
      * List of waiting writers that are blocked because there is already a
      * current writer or one of the current reads conflicts with the change log
      * of the blocked writer.
      */
-    private List<Sync> waitingWriters = new LinkedList<Sync>();
+    private List<CountDownLatch> waitingWriters = new LinkedList<CountDownLatch>();
 
     /**
      * {@inheritDoc}
@@ -99,7 +99,7 @@ public class FineGrainedISMLocking implements ISMLocking {
         // if we get here the following is true:
         // - the current thread does not hold a write lock
         for (;;) {
-            Sync signal;
+            CountDownLatch signal;
             // make sure writer state does not change
             Sync shared = writerStateRWLock.readLock();
             shared.acquire();
@@ -110,7 +110,7 @@ public class FineGrainedISMLocking implements ISMLocking {
                     readLockMap.addLock(id);
                     return new ReadLockImpl(id);
                 } else {
-                    signal = new Latch();
+                    signal = new CountDownLatch(1);
                     waitingReaders.add(signal);
                 }
             } finally {
@@ -120,7 +120,7 @@ public class FineGrainedISMLocking implements ISMLocking {
             // if we get here there was an active writer with
             // a dependency to the current id.
             // wait for the writer until it is done, then try again
-            signal.acquire();
+            signal.await();
         }
     }
 
@@ -130,7 +130,7 @@ public class FineGrainedISMLocking implements ISMLocking {
     public WriteLock acquireWriteLock(ChangeLog changeLog)
             throws InterruptedException {
         for (;;) {
-            Sync signal;
+            CountDownLatch signal;
             // we want to become the current writer
             Sync exclusive = writerStateRWLock.writeLock();
             exclusive.acquire();
@@ -141,7 +141,7 @@ public class FineGrainedISMLocking implements ISMLocking {
                     activeWriterId = getCurrentThreadId();
                     return activeWriter;
                 } else {
-                    signal = new Latch();
+                    signal = new CountDownLatch(1);
                     waitingWriters.add(signal);
                 }
             } finally {
@@ -149,7 +149,7 @@ public class FineGrainedISMLocking implements ISMLocking {
             }
             // if we get here there is an active writer or there is a read
             // lock that conflicts with the change log
-            signal.acquire();
+            signal.await();
         }
     }
 
@@ -269,9 +269,9 @@ public class FineGrainedISMLocking implements ISMLocking {
      * only one thread calls this method at a time.
      */
     private void notifyWaitingReaders() {
-        Iterator<Sync> it = waitingReaders.iterator();
+        Iterator<CountDownLatch> it = waitingReaders.iterator();
         while (it.hasNext()) {
-            it.next().release();
+            it.next().countDown();
             it.remove();
         }
     }
@@ -284,9 +284,9 @@ public class FineGrainedISMLocking implements ISMLocking {
             if (waitingWriters.isEmpty()) {
                 return;
             }
-            Iterator<Sync> it = waitingWriters.iterator();
+            Iterator<CountDownLatch> it = waitingWriters.iterator();
             while (it.hasNext()) {
-                it.next().release();
+                it.next().countDown();
                 it.remove();
             }
         }

@@ -32,6 +32,10 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import javax.jcr.AccessDeniedException;
@@ -113,7 +117,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 
-import EDU.oswego.cs.dl.util.concurrent.Mutex;
 import EDU.oswego.cs.dl.util.concurrent.ReadWriteLock;
 import EDU.oswego.cs.dl.util.concurrent.ReentrantWriterPreferenceReadWriteLock;
 import EDU.oswego.cs.dl.util.concurrent.WriterPreferenceReadWriteLock;
@@ -1688,7 +1691,7 @@ public class RepositoryImpl extends AbstractRepository
         /**
          * mutex for this workspace, used for locking transactions
          */
-        private final Mutex xaLock = new Mutex();
+        private final Semaphore xaLock = new Semaphore(1);
 
         /**
          * Update event channel, used in clustered environment.
