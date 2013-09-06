@@ -22,11 +22,11 @@ import org.apache.jackrabbit.core.SessionImpl;
 import org.apache.jackrabbit.test.AbstractJCRTest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import EDU.oswego.cs.dl.util.concurrent.SynchronousChannel;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
+import java.util.concurrent.SynchronousQueue;
 import javax.jcr.Binary;
 import javax.jcr.Credentials;
 import javax.jcr.Node;
@@ -81,7 +81,7 @@ public class GarbageCollectorTest extends AbstractJCRTest implements ScanEventLi
         Node root = testRootNode;
         Session session = root.getSession();
 
-        final SynchronousChannel sync = new SynchronousChannel();
+        final SynchronousQueue<String> sync = new SynchronousQueue<String>(true);
         final Node node = root.addNode("slowBlob");
         final int blobLength = 1000;
         final ValueFactory vf = session.getValueFactory();
