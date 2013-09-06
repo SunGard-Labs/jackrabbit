@@ -17,6 +17,7 @@
 package org.apache.jackrabbit.core.cluster;
 
 import java.util.ArrayList;
+import java.util.concurrent.CountDownLatch;
 
 import javax.jcr.RepositoryException;
 
@@ -31,8 +32,6 @@ import org.apache.jackrabbit.core.journal.RecordConsumer;
 import org.apache.jackrabbit.core.journal.MemoryJournal.MemoryRecord;
 import org.apache.jackrabbit.spi.commons.namespace.NamespaceResolver;
 import org.apache.jackrabbit.test.JUnitTest;
-
-import EDU.oswego.cs.dl.util.concurrent.Latch;
 
 /**
  * Test cases for cluster synchronization.
@@ -169,8 +168,8 @@ public class ClusterSyncTest extends JUnitTest {
      */
     static class BlockingConsumer implements RecordConsumer {
 
-        private final Latch blockLatch = new Latch();
-        private final Latch unblockLatch = new Latch();
+        private final CountDownLatch blockLatch = new CountDownLatch(1);
+        private final CountDownLatch unblockLatch = new CountDownLatch(1);
         private long revision;
         
         public String getId() {
@@ -186,10 +185,10 @@ public class ClusterSyncTest extends JUnitTest {
         }
 
         public void setRevision(long revision) {
-            blockLatch.release();
+            blockLatch.countDown();
             
             try {
-                unblockLatch.acquire();
+                unblockLatch.await();
             } catch (InterruptedException e) {
                 /* ignore */
             }
@@ -197,11 +196,11 @@ public class ClusterSyncTest extends JUnitTest {
         }
         
         public void waitUntilBlocked() throws InterruptedException {
-            blockLatch.acquire();
+            blockLatch.await();
         }
         
         public void unblock() {
-            unblockLatch.release();
+            unblockLatch.countDown();
         }
     }
 }
