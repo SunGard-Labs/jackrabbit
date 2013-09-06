@@ -23,8 +23,7 @@ import java.util.TreeSet;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ArrayList;
-
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Implements an effective node type cache that uses a bit set for storing the
@@ -64,7 +63,7 @@ public class BitSetENTCacheImpl implements EffectiveNodeTypeCache {
      * be stored in the node type registry since only registered node type names
      * are allowed in the keys.
      */
-    private final ConcurrentReaderHashMap nameIndex = new ConcurrentReaderHashMap();
+    private final ConcurrentHashMap<Name, Integer> nameIndex = new ConcurrentHashMap<Name, Integer>();
 
     /**
      * The reverse lookup table for bit numbers to names

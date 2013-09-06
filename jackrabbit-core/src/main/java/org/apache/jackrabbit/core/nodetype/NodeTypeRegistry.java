@@ -32,6 +32,7 @@ import java.util.Stack;
 import java.util.TreeSet;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.jcr.NamespaceRegistry;
 import javax.jcr.PropertyType;
@@ -60,8 +61,6 @@ import org.apache.jackrabbit.spi.commons.nodetype.QNodeDefinitionBuilder;
 import org.apache.jackrabbit.spi.commons.QNodeTypeDefinitionImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import EDU.oswego.cs.dl.util.concurrent.ConcurrentReaderHashMap;
 
 /**
  * A <code>NodeTypeRegistry</code> ...
@@ -763,7 +762,7 @@ public class NodeTypeRegistry implements NodeTypeEventListener {
         // (replace with: entCache = new EffectiveNodeTypeCacheImpl();
         // for the old one)
         entCache = new BitSetENTCacheImpl();
-        registeredNTDefs = new ConcurrentReaderHashMap();
+        registeredNTDefs = new ConcurrentHashMap<Name, QNodeTypeDefinition>();
 
         // setup definition of root node
         rootNodeDef = createRootNodeDef();
